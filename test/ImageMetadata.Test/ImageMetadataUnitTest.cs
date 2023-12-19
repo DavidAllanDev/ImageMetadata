@@ -6,15 +6,40 @@ namespace ImageMetadata.Test
         [TestMethod]
         public void ImageMetadataTest()
         {
-            string imagePath = @"C:\dev\S\DO\20210624_150302.jpg";
+            string imageFileName = "20210624_150302.jpg";
+
+            string imagePath = GetImagePathForTest();
+
+            string finalPath = Path.Combine(imagePath, imageFileName);
+
+            if (!File.Exists(finalPath))
+                Assert.Fail("No able to Test it check the file for test in ImageMetadata\\test\\TesFiles path.");
 
             ReadImageMetadata imageMetadata = new();
 
-            Image img = imageMetadata.Metadata(imagePath);
+            Image img = imageMetadata.Metadata(finalPath);
 
             Assert.IsNotNull(img);
             Assert.IsNotNull(img.MetadataList);
             Assert.IsTrue(img.MetadataList.Count > 0);
+        }
+
+        public string GetImagePathForTest()
+        {
+            string sourcePath = @"TesFiles\";
+            int tries = 0;
+
+            do
+            {
+                tries++;
+                sourcePath = "..\\" + sourcePath;
+
+                if (tries > 9)
+                    return string.Empty; ;
+
+            } while (!Directory.Exists(sourcePath));
+
+            return sourcePath;
         }
     }
 }
