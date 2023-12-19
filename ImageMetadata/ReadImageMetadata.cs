@@ -5,7 +5,7 @@ namespace ImageMetadata
 {
     public class ReadImageMetadata
     {
-        public Image Metadata(string imagePath)
+        public Image Metadata(string imagePath, bool filterChars = true)
         {
             if (imagePath == null)
                 throw new ApplicationException("The image path is not valid!");
@@ -33,24 +33,36 @@ namespace ImageMetadata
 
                     if (propValue != null)
                     {
-                        imageMetadataValue = ReplaceJavaChars(encoding.GetString(propValue));
+                        if (filterChars)
+                            imageMetadataValue = ReplaceJavaChars(encoding.GetString(propValue));
+                        else
+                            imageMetadataValue = encoding.GetString(propValue);
                     }
                 }
 
                 count++;
 
-                ImageMetadata meta = new()
+                string ImageMetadataId = string.Empty;
+
+                if (propItem != null && propItem.Id > 0)
                 {
-                    Id = $"0x{propItem.Id:x}",
-                    Type = propItem.Type.ToString(),
-                    Value = imageMetadataValue
-                };
+                    //https://exiftool.org/TagNames/EXIF.html (https://exiftool.org/)
+                    ImageMetadataId = $"0x{propItem.Id:x}";// The "0x8773" seems to have platform info such as (Google) so Android
+                }
 
-                if (string.IsNullOrEmpty(meta.Value.Trim()) || (!meta.Type.Equals("2") && !meta.Type.Equals("5")))
-                    continue;
+                ImageMetadata meta = new() { Id = ImageMetadataId, Type = propItem.Type.ToString(), Value = imageMetadataValue };
 
-                if (image.MetadataList.Any(M => M.Value == meta.Value && M.Type == meta.Type))
-                    continue;
+                if (filterChars)
+                {
+                    if (string.IsNullOrEmpty(meta.Value.Trim()))
+                        continue;
+
+                    if (!meta.Type.Equals("1") && !meta.Type.Equals("2") && !meta.Type.Equals("3") && !meta.Type.Equals("5"))
+                        continue;
+
+                    if (image.MetadataList.Any(M => M.Value == meta.Value && M.Type == meta.Type))
+                        continue;
+                }
 
 
                 image.MetadataList.Add(meta);
